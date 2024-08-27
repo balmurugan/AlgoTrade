@@ -79,30 +79,35 @@ void OnTick()
       order = order+1;
      }
 
-  /* if(pos <order)
-     {
-      orderR=Get_openorder("Buy");
-      SendSellOrder(orderR);
-     }*/
+   /* if(pos <order)
+      {
+       orderR=Get_openorder("Buy");
+       SendSellOrder(orderR);
+      }*/
    double posB=((EnteredBid-Ask)/_Point)/entrypoints;
    if(posB >orderB || orderB==0)
      {
 
       SendSellOrder(orderB);
       orderB = orderB+1;
-      //Alert("Bid -"+ orderB+"-"+ Bid);
-     }
-     else if(posB <(orderB-1))
-     {
-      orderRB=Get_openorder("sell");
-      SendBuyROrder(orderRB);
-      
+      orderRB=0;
       //Alert("Bid -"+ orderB+"-"+ Bid);
      }
 
+ Print("orderB"+(orderB+"orderRB"+ orderRB));
+   if(posB <(orderB-orderRB) && orderB!=0)
+     {
+    
+      orderRB=Get_openorder("sell");
+      SendBuyROrder(orderRB);
+      orderRB=orderRB+1;
+              //Alert("Bid -"+ orderB+"-"+ Bid);
+     }
+
   }
-  
-  // OPEN POSITION
+
+
+// OPEN POSITION
 void SendBuyROrder(int order)
   {
 // if (OrdersTotal() < 1)
@@ -221,23 +226,23 @@ void SLSettings(double Price,string order_Type)
                Print("StopLossPrice"+StopLossPrice);
                // TakeProfitPrice = NormalizeDouble(Price + TakeProfit * nDigits, Digits);
                if(OpenPrice <= Price)
-               if(OrderModify(OrderTicket(), OpenPrice, StopLossPrice, TakeProfitPrice, OrderExpiration()))
-                 {
-                  // If the order is updated correctly, increment the counter of updated orders.
-                  TotalUpdated++;
-                 }
-               else
-                 {
-                  // If the order fails to get updated, print the error.
-                  Print("Order failed to update with error: ", GetLastError());
-                 }
+                  if(OrderModify(OrderTicket(), OpenPrice, StopLossPrice, TakeProfitPrice, OrderExpiration()))
+                    {
+                     // If the order is updated correctly, increment the counter of updated orders.
+                     TotalUpdated++;
+                    }
+                  else
+                    {
+                     // If the order fails to get updated, print the error.
+                     Print("Order failed to update with error: ", GetLastError());
+                    }
 
-}
               }
            }
         }
-
      }
+
+  }
 
 //+------------------------------------------------------------------+
 //|                                                                  |
