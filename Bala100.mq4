@@ -3,10 +3,14 @@
 //|                                  Copyright 2024, MetaQuotes Ltd. |
 //|                                             https://www.mql5.com |
 //+------------------------------------------------------------------+
+
+
 #property copyright "Copyright 2024, MetaQuotes Ltd."
 #property link      "https://www.mql5.com"
 #property version   "1.00"
 #property strict
+
+#include <SL.mqh>
 //+------------------------------------------------------------------+
 //| Expert initialization function                                   |
 //+------------------------------------------------------------------+
@@ -26,7 +30,8 @@ extern int MagicNumber = 666666;
 double EnteredBid = 0;
 int orderB = 0;
 int orderRB = 0;
-
+int countsellorder=0;
+int countbuyorder=0;
 extern  int entrypoints=20;
 // extern double Lots = 0.01;
 extern string MoneyManagement = "==MONEY MANAGEMENT SETTINGS=="; //MONEY MANAGEMENT SETTINGS
@@ -38,6 +43,10 @@ extern double MartiMultiplier = 0; //Marti Multiplier
 extern int Slippage = 5; //Slippage Setting
 int intMarketSpreadPoints = MarketInfo(_Symbol, MODE_SPREAD);
 double dblSymbolPointSize    = MarketInfo(_Symbol, MODE_POINT);
+void OnStart()
+{
+
+}
 int OnInit()
   {
 //--- create timer
@@ -62,6 +71,8 @@ void OnTick()
   {
 //---
 
+   Accountinfo();
+   bool flag=false;
 
    if(EnteredAsk==0)
      {
@@ -77,7 +88,39 @@ void OnTick()
 
       SendBuyOrder(order);
       order = order+1;
+      orderR=0;
      }
+
+   /* Reverse Buy */
+
+  Print("ReverseposB"+pos+"orderB"+(order+"orderRB"+ orderR),Green);
+   countbuyorder=Get_openorder("Buy");
+   if((countbuyorder==0 || orderR>0)  && order!=0)
+     {
+
+    
+      if(pos >(order-orderR))
+        {
+
+         Print("pos111111111"+pos+"order"+(order+"orderR"+ orderR));
+         //orderRB=Get_openorder("sell");
+         SendsellROrder(orderR);
+         orderR=orderR+1;
+         order = order-1;
+        }
+        else if(pos <(order-orderR))
+        {
+        
+        if(countbuyorder==0)
+        {
+        order = order-1;
+        }
+        
+        }
+      //Alert("Bid -"+ orderB+"-"+ Bid);
+     }
+     
+
 
    /* if(pos <order)
       {
@@ -93,86 +136,128 @@ void OnTick()
       orderRB=0;
       //Alert("Bid -"+ orderB+"-"+ Bid);
      }
-
- Print("orderB"+(orderB+"orderRB"+ orderRB));
-   if(posB <(orderB-orderRB) && orderB!=0)
+ Print("posS"+posB+"orderS"+(orderB+"orderRS"+ orderRB),Red);
+   countsellorder=Get_openorder("sell");
+   if((countsellorder==0 || orderRB>0)  && orderB!=0)
      {
-    
-      orderRB=Get_openorder("sell");
-      SendBuyROrder(orderRB);
-      orderRB=orderRB+1;
-              //Alert("Bid -"+ orderB+"-"+ Bid);
+
+      Print("posS"+posB+"orderS"+(orderB+"orderRS"+ orderRB));
+      if(posB <(orderB-orderRB))
+        {
+
+         Print("posS111111111"+posB+"orderS"+(orderB+"orderRS"+ orderRB));
+         //orderRB=Get_openorder("sell");
+         SendBuyROrder(orderRB);
+         orderRB=orderRB+1;
+         orderB = orderB-1;
+        }else if(posB >(orderB-orderRB))
+        {
+        
+        if(countsellorder==0 || countsellorder==1)
+        {
+         orderB = orderB-1;
+        }
+        
+        }
+        
+      //Alert("Bid -"+ orderB+"-"+ Bid);
      }
 
   }
 
 
 // OPEN POSITION
-void SendBuyROrder(int order)
+void SendBuyROrder(int O_order)
   {
 // if (OrdersTotal() < 1)
 
-   if(order==0)
+
+
+   if(O_order==0)
      {
-      DrawSellSign("SellS"+orderB);
-      order = OrderSend(Symbol(), OP_SELL, LotNormalize(Initial_Lot), Bid, Slippage, 0, Sell_Take_Profit, "Order Sell Send", MagicNumber, 0, clrRed);
-
+      DrawSellSign("SellRRS"+O_order);
+      OrderSend(Symbol(), OP_SELL, LotNormalize(Initial_Lot), Bid, Slippage, 0, Sell_Take_Profit, "Order Sell Send", MagicNumber, 0, clrRed);
      }
-
    if(order!=0)
      {
-      DrawBuySign("BuyB"+order);
-      order = OrderSend(Symbol(), OP_BUY, LotNormalize(Initial_Lot*order), Ask, Slippage, 0, Buy_Take_Profit, "Order Buy Send", MagicNumber, 0, clrGreen);
+      DrawBuySign("BuyRRB"+O_order);
+     OrderSend(Symbol(), OP_BUY, LotNormalize(Initial_Lot*O_order), Ask, Slippage, 0, Buy_Take_Profit, "Order Buy Send", MagicNumber, 0, clrGreen);
       SLSettings(Ask,"Buy");
-      DrawSellSign("BuyS"+order);
-      order = OrderSend(Symbol(), OP_SELL,Initial_Lot, Bid, Slippage, 0, Sell_Take_Profit, "Order Sell Send", MagicNumber, 0, clrRed);
+      DrawSellSign("BuyRRS"+O_order);
+      OrderSend(Symbol(), OP_SELL,Initial_Lot, Bid, Slippage, 0, Sell_Take_Profit, "Order Sell Send", MagicNumber, 0, clrRed);
+     }
+
+
+
+  }
+
+// OPEN POSITION
+void SendsellROrder(int O_order)
+  {
+
+   Print("Sell"+O_order);
+// if (OrdersTotal() < 1)
+
+   if(O_order==0)
+     {
+      DrawBuySign("BuyRB"+O_order);
+      OrderSend(Symbol(), OP_BUY, LotNormalize(Initial_Lot), Ask, Slippage, 0, Buy_Take_Profit, "Order Buy Send", MagicNumber, 0, clrGreen);
+     }
+
+   if(O_order!=0)
+     {
+      DrawBuySign("BuyRB"+O_order);
+      OrderSend(Symbol(), OP_SELL, LotNormalize(Initial_Lot*O_order), Ask, Slippage, 0, Buy_Take_Profit, "Order Buy Send", MagicNumber, 0, clrGreen);
+      SLSettings(Bid,"sell");
+      DrawSellSign("BuyRS"+O_order);
+      OrderSend(Symbol(), OP_BUY,Initial_Lot, Bid, Slippage, 0, Sell_Take_Profit, "Order Sell Send", MagicNumber, 0, clrRed);
      }
 
   }
 
 // OPEN POSITION
-void SendBuyOrder(int order)
+void SendBuyOrder(int O_order)
   {
 // if (OrdersTotal() < 1)
 
-   if(order==0)
+   if(O_order==0)
      {
-      DrawBuySign("BuyB"+order);
-      order = OrderSend(Symbol(), OP_BUY, LotNormalize(Initial_Lot), Ask, Slippage, 0, Buy_Take_Profit, "Order Buy Send", MagicNumber, 0, clrGreen);
+      Print("Buy"+O_order);
+      DrawBuySign("BuyB"+O_order);
+      OrderSend(Symbol(), OP_BUY, LotNormalize(Initial_Lot), Ask, Slippage, 0, Buy_Take_Profit, "Order Buy Send", MagicNumber, 0, clrGreen);
      }
-
-   if(order!=0)
+   if(O_order!=0)
      {
-      DrawBuySign("BuyB"+order);
-      order = OrderSend(Symbol(), OP_BUY, LotNormalize(Initial_Lot*order), Ask, Slippage, 0, Buy_Take_Profit, "Order Buy Send", MagicNumber, 0, clrGreen);
+      Print("Buy"+O_order);
+      DrawBuySign("BuyB"+O_order);
+      OrderSend(Symbol(), OP_BUY, LotNormalize(Initial_Lot*O_order), Ask, Slippage, 0, Buy_Take_Profit, "Order Buy Send", MagicNumber, 0, clrGreen);
       SLSettings(Ask,"Buy");
-      DrawSellSign("BuyS"+order);
-      order = OrderSend(Symbol(), OP_SELL,Initial_Lot, Bid, Slippage, 0, Sell_Take_Profit, "Order Sell Send", MagicNumber, 0, clrRed);
+      DrawSellSign("BuyS"+O_order);
+      OrderSend(Symbol(), OP_SELL,Initial_Lot, Bid, Slippage, 0, Sell_Take_Profit, "Order Sell Send", MagicNumber, 0, clrRed);
      }
-
   }
 
 //+------------------------------------------------------------------+
 //|                                                                  |
 //+------------------------------------------------------------------+
-void SendSellOrder(int orderB)
+void SendSellOrder(int O_order)
   {
    Print(OrdersTotal());
 // if (OrdersTotal() < 1) {
-   if(orderB==0)
+   if(O_order==0)
      {
-      DrawSellSign("SellS"+orderB);
-      order = OrderSend(Symbol(), OP_SELL, LotNormalize(Initial_Lot), Bid, Slippage, 0, Sell_Take_Profit, "Order Sell Send", MagicNumber, 0, clrRed);
+      DrawSellSign("SellS"+O_order);
+      OrderSend(Symbol(), OP_SELL, LotNormalize(Initial_Lot), Bid, Slippage, 0, Sell_Take_Profit, "Order Sell Send", MagicNumber, 0, clrRed);
 
      }
-   if(orderB!=0)
+   if(O_order!=0)
      {
 
-      DrawSellSign("SellS"+orderB);
-      order = OrderSend(Symbol(), OP_SELL, LotNormalize(Initial_Lot*orderB), Bid, Slippage, 0, Sell_Take_Profit, "Order Sell Send", MagicNumber, 0, clrRed);
+      DrawSellSign("SellS"+O_order);
+      OrderSend(Symbol(), OP_SELL, LotNormalize(Initial_Lot*O_order), Bid, Slippage, 0, Sell_Take_Profit, "Order Sell Send", MagicNumber, 0, clrRed);
       SLSettings(Bid,"sell");
-      DrawBuySign("SellB"+orderB);
-      order = OrderSend(Symbol(), OP_BUY, Initial_Lot, Ask, Slippage, 0, Buy_Take_Profit, "Order Buy Send", MagicNumber, 0, clrGreen);
+      DrawBuySign("SellB"+O_order);
+      OrderSend(Symbol(), OP_BUY, Initial_Lot, Ask, Slippage, 0, Buy_Take_Profit, "Order Buy Send", MagicNumber, 0, clrGreen);
 
      }
 //
@@ -181,68 +266,6 @@ void SendSellOrder(int orderB)
 //+------------------------------------------------------------------+
 //|                                                                  |
 //+------------------------------------------------------------------+
-void SLSettings(double Price,string order_Type)
-  {
-   int TotalUpdated = 0;  // Counter for how many orders have been updated.
-
-   double nDigits = CalculateNormalizedDigits();
-   for(int i = OrdersTotal() - 1; i >= 0; i--)
-     {
-      // Select an order by index i, selecting by position and from the pool of market trades.
-      // If the selection is successful, proceed with the update.
-      if(OrderSelect(i, SELECT_BY_POS, MODE_TRADES))
-        {
-         // Check if the order is for the current chart's currency pair.
-         if(OrderSymbol() == Symbol())
-           {
-            double OpenPrice = 0;
-            double StopLossPrice = 0;
-            double TakeProfitPrice = 0;
-            // Get the open price.
-            OpenPrice = OrderOpenPrice();
-            // Calculate the stop-loss and take-profit price depending on the type of order.
-            if(OrderType() == OP_SELL && order_Type == "sell")
-              {
-               StopLossPrice = NormalizeDouble(Price + (StopLoss * nDigits), Digits);
-               // TakeProfitPrice = NormalizeDouble(Price + TakeProfit * nDigits, Digits);
-
-               if(OrderModify(OrderTicket(), OpenPrice, StopLossPrice, TakeProfitPrice, OrderExpiration()))
-                 {
-                  // If the order is updated correctly, increment the counter of updated orders.
-                  TotalUpdated++;
-                 }
-               else
-                 {
-                  // If the order fails to get updated, print the error.
-                  Print("Order failed to update with error: ", GetLastError());
-                 }
-              }
-
-            Print("StopLevel = ", (int)MarketInfo(Symbol(), MODE_STOPLEVEL));
-
-            if(OrderType() == OP_BUY && order_Type == "Buy")
-              {
-               StopLossPrice = NormalizeDouble(Price - (StopLoss * nDigits), Digits);
-               Print("StopLossPrice"+StopLossPrice);
-               // TakeProfitPrice = NormalizeDouble(Price + TakeProfit * nDigits, Digits);
-               if(OpenPrice <= Price)
-                  if(OrderModify(OrderTicket(), OpenPrice, StopLossPrice, TakeProfitPrice, OrderExpiration()))
-                    {
-                     // If the order is updated correctly, increment the counter of updated orders.
-                     TotalUpdated++;
-                    }
-                  else
-                    {
-                     // If the order fails to get updated, print the error.
-                     Print("Order failed to update with error: ", GetLastError());
-                    }
-
-              }
-           }
-        }
-     }
-
-  }
 
 //+------------------------------------------------------------------+
 //|                                                                  |
@@ -273,22 +296,14 @@ int Get_openorder(string order_Type)
                // If the order is updated correctly, increment the counter of updated orders.
                TotalUpdated++;
               }
-            else
-              {
-               // If the order fails to get updated, print the error.
-               Print("Order failed to update with error: ", GetLastError());
-              }
+
 
 
             if(OrderType() == OP_BUY && order_Type == "Buy")
               {
                TotalUpdated++;
               }
-            else
-              {
-               // If the order fails to get updated, print the error.
-               Print("Order failed to update with error: ", GetLastError());
-              }
+
 
 
            }
@@ -317,7 +332,7 @@ void DrawBuySign(string objectName)
   {
    ObjectCreate(objectName, OBJ_ARROW_BUY, 0, 0, 0);
    ObjectSet(objectName, OBJPROP_ARROWCODE, 233);
-   ObjectSet(objectName, OBJPROP_COLOR, Yellow);
+   ObjectSet(objectName, OBJPROP_COLOR, Green);
    ObjectSet(objectName, OBJPROP_WIDTH, 3);
    ObjectSet(objectName, OBJPROP_TIME1, Time[0]);
    ObjectSet(objectName, OBJPROP_PRICE1, Low[0] - 10 * _Point);
@@ -378,3 +393,72 @@ void OnChartEvent(const int id,
 
   }
 //+------------------------------------------------------------------+
+
+void SLSettings(double Price,string order_Type)
+  {
+   int TotalUpdated = 0;  // Counter for how many orders have been updated.
+
+   double nDigits = CalculateNormalizedDigits();
+   for(int i = OrdersTotal() - 1; i >= 0; i--)
+     {
+      // Select an order by index i, selecting by position and from the pool of market trades.
+      // If the selection is successful, proceed with the update.
+      if(OrderSelect(i, SELECT_BY_POS, MODE_TRADES))
+        {
+         // Check if the order is for the current chart's currency pair.
+         if(OrderSymbol() == Symbol())
+           {
+            double OpenPrice = 0;
+            double StopLossPrice = 0;
+            double TakeProfitPrice = 0;
+            // Get the open price.
+            OpenPrice = OrderOpenPrice();
+            // Calculate the stop-loss and take-profit price depending on the type of order.
+            if(OrderType() == OP_SELL && order_Type == "sell")
+              {
+               StopLossPrice = NormalizeDouble(Price + (StopLoss * nDigits), Digits);
+               // TakeProfitPrice = NormalizeDouble(Price + TakeProfit * nDigits, Digits);
+               if(OpenPrice >= Price)
+                 {
+                  if(OrderModify(OrderTicket(), OpenPrice, StopLossPrice, TakeProfitPrice, OrderExpiration()))
+                    {
+                     // If the order is updated correctly, increment the counter of updated orders.
+                     TotalUpdated++;
+                    }
+                  else
+                    {
+                     // If the order fails to get updated, print the error.
+                     Print("Order failed to update with Serror: ", GetLastError());
+                    }
+
+
+                 }
+              }
+
+            Print("StopLevel = ", (int)MarketInfo(Symbol(), MODE_STOPLEVEL));
+
+            if(OrderType() == OP_BUY && order_Type == "Buy")
+              {
+               StopLossPrice = NormalizeDouble(Price - (StopLoss * nDigits), Digits);
+               Print("StopLossPrice"+StopLossPrice);
+               // TakeProfitPrice = NormalizeDouble(Price + TakeProfit * nDigits, Digits);
+               if(OpenPrice <= Price)
+                 {
+                  if(OrderModify(OrderTicket(), OpenPrice, StopLossPrice, TakeProfitPrice, OrderExpiration()))
+                    {
+                     // If the order is updated correctly, increment the counter of updated orders.
+                     TotalUpdated++;
+                    }
+                  else
+                    {
+                     // If the order fails to get updated, print the error.
+                     Print("Order failed to update with Berror: ", GetLastError());
+                    }
+
+                 }
+              }
+           }
+        }
+     }
+
+  }
